@@ -4,6 +4,7 @@ import smtplib
 import ssl
 import functions_framework
 import os
+import json
 
 ENV_VAR_MSG = "Specified environment variable is not set."
 METHOD_NOT_ALLOWED_MSG = "Method not allowed"
@@ -17,24 +18,24 @@ def error_handler(request):
         METHOD_NOT_ALLOWED_MSG, METHOD_NOT_ALLOWED
 
     request_json = request.get_json()
-    sender = os.environ.get('USER', ENV_VAR_MSG)
+    sender = os.environ.get('SENDER', ENV_VAR_MSG)
     password = os.environ.get('PASSWORD', ENV_VAR_MSG)
     recipients = request.args['recipients'].split(",")
 
     message = MIMEMultipart("alternative")
     message['Subject'] = f"AT Central Alerts - Error Job ID {request_json['job']['id']}"
     message['From'] = sender
-    message['To'] = recipients
+    message['To'] = ",".join(recipients)
 
     body = f"""
-        Job ID: {request_json['job']['id']}\n
-        Service: {request_json['job']['service_instance']['name']}\n
-        Error: {request['error']}\n
-        Job: {request['json']}
-        """
+        Job ID: {request_json['job']['id']}<br>
+        <hr>
+        Service: {request_json['job']['service_instance']['name']}<br>
+        Error: {request_json['error']}<br>
+        Job: <pre>{json.dumps(request_json['job'])}</pre>
+    """
 
     text = body
-
     html = body
 
     part1 = MIMEText(text, "plain")
